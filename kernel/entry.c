@@ -51,15 +51,18 @@ static long dispatch_ioctl(struct file *const file, unsigned int const cmd, unsi
             return -EIO;
         break;
 
-    case OP_MODULE_BASE:
+    case OP_MODULE_BASE: {
+    // 1. Сначала объявляем переменную!
+    long str_len; 
+
     if (copy_from_user(&mb, (void __user *)arg, sizeof(mb)) != 0)
         return -EFAULT;
 
-    // Очищаем буфер имени
     memset(name, 0, sizeof(name));
 
-    // Правильное копирование строки из userspace
-    long str_len = strncpy_from_user(name, (const char __user *)mb.name, sizeof(name) - 1);
+    // 2. Теперь используем переменную
+    str_len = strncpy_from_user(name, (const char __user *)mb.name, sizeof(name) - 1);
+    
     if (str_len < 0)
         return -EFAULT;
 
@@ -67,8 +70,9 @@ static long dispatch_ioctl(struct file *const file, unsigned int const cmd, unsi
 
     if (copy_to_user((void __user *)arg, &mb, sizeof(mb)) != 0)
         return -EFAULT;
+        
     break;
-
+}
     default:
         return -EINVAL;
     }
