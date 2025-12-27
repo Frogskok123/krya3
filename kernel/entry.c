@@ -52,14 +52,22 @@ static long dispatch_ioctl(struct file *const file, unsigned int const cmd, unsi
         break;
 
     case OP_MODULE_BASE:
-        if (copy_from_user(&mb, (void __user *)arg, sizeof(mb)) != 0 || 
-            copy_from_user(name, (void __user *)mb.name, sizeof(name) - 1) != 0)
-            return -EFAULT;
-        
-        mb.base = get_module_base(mb.pid, name);
-        if (copy_to_user((void __user *)arg, &mb, sizeof(mb)) != 0)
-            return -EFAULT;
-        break;
+    if (copy_from_user(&mb, (void __user *)arg, sizeof(mb)) != 0)
+        return -EFAULT;
+
+    // Очищаем буфер имени
+    memset(name, 0, sizeof(name));
+
+    // Правильное копирование строки из userspace
+    long str_len = strncpy_from_user(name, (const char __user *)mb.name, sizeof(name) - 1);
+    if (str_len < 0)
+        return -EFAULT;
+
+    mb.base = get_module_base(mb.pid, name);
+
+    if (copy_to_user((void __user *)arg, &mb, sizeof(mb)) != 0)
+        return -EFAULT;
+    break;
 
     default:
         return -EINVAL;
