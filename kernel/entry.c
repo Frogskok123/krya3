@@ -22,20 +22,11 @@ static long dispatch_ioctl(struct file *const file, unsigned int const cmd, unsi
 {
     static COPY_MEMORY cm;
     static MODULE_BASE mb;
-    static char key[0x100] = {0};
+    
     static char name[0x100] = {0};
-    static bool is_verified = false;
+    
 
-    if (cmd == OP_INIT_KEY && !is_verified) {
-        if (copy_from_user(key, (void __user *)arg, sizeof(key) - 1) != 0)
-            return -EFAULT;
-        is_verified = true;
-        return 0;
-    }
-
-    if (!is_verified)
-        return -EACCES;
-
+    
     switch (cmd) {
     case OP_READ_MEM:
         if (copy_from_user(&cm, (void __user *)arg, sizeof(cm)) != 0)
